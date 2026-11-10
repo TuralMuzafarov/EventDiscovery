@@ -1,6 +1,9 @@
 package models
 
-import "github.com/TuralMuzafarov/EventDiscovery/db"
+import (
+	"github.com/TuralMuzafarov/EventDiscovery/db"
+	"github.com/TuralMuzafarov/EventDiscovery/utils"
+)
 
 type User struct {
 	ID       int64
@@ -14,8 +17,14 @@ func (u User) Save() error {
 	if err != nil {
 		return err
 	}
+
+	hashedPassword, err := utils.HashPassword(u.Password)
+	if err != nil {
+		return err
+	}
+
 	defer stmt.Close()
-	result, err := stmt.Exec(u.Email, u.Password)
+	result, err := stmt.Exec(u.Email, hashedPassword)
 	if err != nil {
 		return err
 	}
