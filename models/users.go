@@ -32,3 +32,14 @@ func (u User) Save() error {
 	u.ID = userID
 	return nil
 }
+
+func (u User) ValidateCredentials() error {
+	query := "SELECT email, password FROM users WHERE email = ?"
+	row := db.DB.QueryRow(query, u.Email)
+	var retrievedPassword string
+	err := row.Scan(&retrievedPassword)
+	if err != nil {
+		return err
+	}
+	return nil
+}
