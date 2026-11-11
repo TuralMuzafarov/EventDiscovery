@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/TuralMuzafarov/EventDiscovery/models"
+	"github.com/TuralMuzafarov/EventDiscovery/utils"
 	"github.com/gin-gonic/gin"
 )
 
@@ -38,15 +39,27 @@ func getEvent(context *gin.Context) {
 }
 
 func createEvent(context *gin.Context) {
+	token := context.Request.Header.Get("Authorization")
+	if token == "" {
+		context.JSON(http.StatusUnauthorized, gin.H{"message": "Missing authorization token"})
+		return
+	}
+
+	userID, err := utils.VerifyToken(token)
+
+	if err != nil {
+		context.JSON(http.StatusUnauthorized, gin.H{"message": err.Error()})
+		return
+	}
+
 	var event models.Event
-	err := context.ShouldBindJSON(&event)
+	err = context.ShouldBindJSON(&event)
 	if err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{"message": "Could not parse request data"})
 		return
 	}
 
-	event.UserID = 1
-	event.ID = 1
+	event.UserID = userID
 	err = event.Save()
 	if err != nil {
 		context.JSON(http.StatusInternalServerError, gin.H{
@@ -56,7 +69,10 @@ func createEvent(context *gin.Context) {
 		return
 	}
 
-	context.JSON(http.StatusCreated, gin.H{"message": "Event created successfully"})
+	context.JSON(http.StatusCreated, gin.H{
+		"message": "Event created successfully",
+		"event":   event,
+	})
 }
 
 func updateEvent(context *gin.Context) {
